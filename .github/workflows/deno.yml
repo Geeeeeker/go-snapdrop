@@ -15,10 +15,7 @@ jobs:
       matrix:
         goos: [linux, darwin, windows]
         goarch: [amd64, arm64]
-        exclude:
-          # 排除一些不太常见的组合（可根据需要调整）
-          - goos: windows
-            goarch: arm64
+        # 不再排除任何组合，包含 windows/arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

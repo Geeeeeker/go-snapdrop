@@ -1,0 +1,48 @@
+name: Build SnapDrop (Go)
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:   # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          # 排除一些不太常见的组合（可根据需要调整）
+          - goos: windows
+            goarch: arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'   # 或使用 stable
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0        # 静态编译，确保二进制可独立运行
+        run: |
+          # 定义输出文件名
+          output_name="snapdrop-${GOOS}-${GOARCH}"
+          if [ "$GOOS" = "windows" ]; then
+            output_name="${output_name}.exe"
+          fi
+          # 执行编译，添加常用 ldflags 减小体积
+          go build -ldflags="-s -w" -o "$output_name" .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapdrop-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: snapdrop-*
